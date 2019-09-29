@@ -6,7 +6,7 @@ AliVa is a simple counter and visualizar of aligned nucleotide sequence variatio
 
 ## Output example
 
-![line_all.pdf](test/line_all.pdf)
+![line_all.pdf](test/line_all.pdf.png)
 
 
 ## Requirement
