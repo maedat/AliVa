@@ -5,7 +5,7 @@
 # ======================================================================
 # Project Name    : AliVa
 # File Name       : aliva.py
-# Version       : 1.0.0
+# Version       : 1.0.3
 # Encoding        : python
 # Creation Date   : 2019/09/1
 # Author : Taro Maeda 
@@ -33,7 +33,8 @@ def GET_ARGS():
     parser.add_argument('-f','--fasta',  help="File path to a genome sequence file", required=True)
     parser.add_argument('-w','--win', help="window size (bp) (default = 50)", required=False)
     parser.add_argument('-p','--plot', help="Manualy modify the plot with seaborn window", action='store_true', required=False)
-    parser.set_defaults(win=50)
+    parser.add_argument('-o','--out', help="Prefix for output files", required=False)
+    parser.set_defaults(win=50, out="")
     return parser.parse_args()
 
 
@@ -79,6 +80,7 @@ if __name__ == '__main__':
     fasta_in = args.fasta
     k_num = args.win
     plot_flag = args.plot
+    out_prexi = args.out
     
     
     MUCH_num = 0
@@ -88,11 +90,57 @@ if __name__ == '__main__':
     Transition =0
     Already_done =[]
 
+    label_total = ["Pair", "Consensus", "Indel", "Transversion", "Transition"]
     label = ["Pair", "start", "end", "Consensus", "Indel", "Transversion", "Transition"]
     labels = '\t'.join(label)
     
     
+    df_total = pd.DataFrame(columns=label_total)
     df = pd.DataFrame(columns=label)
+    
+#full_length_analysis
+
+    entries = [(fasta_in, fasta_in)]
+    for index, (fasta_1, fasta_2) in enumerate(entries):
+    ##fastaから配列を順番に読み込む
+        with open(fasta_1, "rt") as fh1:
+            for rec1 in SeqIO.parse(fh1, "fasta"):
+                features=[] #featuresを初期化しておく(無い時があるので）
+                length = len(rec1) #配列長を取得する
+                F1_id = rec1.id #配列名を取得する
+                F1_seq = rec1.seq.upper() #配列を大文字で取得する
+                with open(fasta_2, "rt") as fh2:
+                    for rec2 in SeqIO.parse(fh2, "fasta"):
+                        features=[] #featuresを初期化しておく(無い時があるので）
+                        F2_id = rec2.id #配列名を取得する
+                        F2_seq = rec2.seq.upper() #配列を大文字で取得する
+                        if F2_id != F1_id:
+                            Pair = F1_id +  " vs " + F2_id
+                            if Pair in Already_done:
+                                for seq_num in range(length):
+                                    tmp_MUCH_num, tmp_Indel, tmp_Transver, tmp_Transition  = VAL_COUNTER(F1_seq[seq_num], F2_seq[seq_num])
+                                    MUCH_num += tmp_MUCH_num
+                                    Indel    += tmp_Indel
+                                    Transver += tmp_Transver
+                                    Transition += tmp_Transition
+                                sdf= pd.DataFrame(
+                                                    {'Pair': Pair,
+                                                    'Consensus': MUCH_num,
+                                                    'Indel': Indel,
+                                                    'Transversion': Transver,
+                                                    'Transition': Transition}, index= [Pair] )
+                                df_total = df_total.append(sdf)
+                                MUCH_num = 0
+                                Indel =0 
+                                Transver =0
+                                Transition =0
+                            Already_done.append(F2_id+  " vs " + F1_id)
+    print(df_total)
+    df_total.to_csv(out_prexi + "whole_mutation_summary.txt", sep="\t")
+    
+    
+    
+#window_cut
     
     entries = [(fasta_in, fasta_in)]
     for index, (fasta_1, fasta_2) in enumerate(entries):
@@ -121,7 +169,7 @@ if __name__ == '__main__':
                                         Transver += tmp_Transver
                                         Transition += tmp_Transition
                                         cut_length_mod = cut_length+k_num
-                                    sdf= pd.DataFrame(
+                                    sdf_total= pd.DataFrame(
                                                         {'Pair': Pair,
                                                         'start': cut_length,
                                                         'end': cut_length_mod,
@@ -129,7 +177,7 @@ if __name__ == '__main__':
                                                         'Indel': Indel,
                                                         'Transversion': Transver,
                                                         'Transition': Transition}, index= [Pair + str(cut_length)] )
-                                    df = df.append(sdf)
+                                    df = df.append(sdf_total)
                                     MUCH_num = 0
                                     Indel =0 
                                     Transver =0
@@ -154,7 +202,7 @@ if __name__ == '__main__':
     groupde_mean = grouped.mean()
     
     groupde_mean.to_csv("average.txt", sep="\t")
-    df.to_csv("result_rawdata.txt", sep="\t")
+    df.to_csv(out_prexi+"result_rawdata.txt", sep="\t")
 
     
     
@@ -168,14 +216,14 @@ if __name__ == '__main__':
     plt.figure()
     sns.countplot(x="Transversion", data=df)
     plt.xlabel('Number of Transversion par window')
-    plt.savefig("hist_Transversion.pdf")      
+    plt.savefig(out_prexi+"hist_Transversion.pdf")      
     if plot_flag == True:
         plt.show()    
     
     plt.figure()
     sns.countplot(x="Indel", data=df)
     plt.xlabel('Number of Indel par window')
-    plt.savefig("hist_Indel.pdf")      
+    plt.savefig(out_prexi+"hist_Indel.pdf")      
     if plot_flag == True:
         plt.show()
 
@@ -191,21 +239,21 @@ if __name__ == '__main__':
     plt.figure()
     sns.lineplot(x="start", y ="Transversion", hue = "Pair", data=df)
     plt.xlabel('start position of window')
-    plt.savefig("line_Transition.pdf")      
+    plt.savefig(out_prexi+"line_Transition.pdf")      
     if plot_flag == True:
         plt.show()    
     
     plt.figure()
     sns.lineplot(x="start", y ="Transition", hue = "Pair", data=df)
     plt.xlabel('start position of window')
-    plt.savefig("line_Transition.pdf")      
+    plt.savefig(out_prexi+"line_Transition.pdf")      
     if plot_flag == True:
         plt.show()    
     
     plt.figure()
     sns.lineplot(x="start", y ="Indel", hue = "Pair", data=df)
     plt.xlabel('start position of window')
-    plt.savefig("line_indel.pdf")      
+    plt.savefig(out_prexi+"line_indel.pdf")      
     if plot_flag == True:
         plt.show()
     
@@ -216,6 +264,6 @@ if __name__ == '__main__':
     sns.lineplot(x="start", y ="mutation par window", hue="mutation type", data=df_mod, ci="sd")
     plt.xlabel('start position of window')
     plt.ylabel('mutation par window (Mesh = SD)')
-    plt.savefig("line_all.pdf")      
+    plt.savefig(out_prexi+"line_all.pdf")      
     if plot_flag == True:
         plt.show()
