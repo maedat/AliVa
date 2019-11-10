@@ -144,10 +144,10 @@ if __name__ == '__main__':
     
     df.start = df.start.astype(int)    
     df.end = df.end.astype(int)    
-    df.Transversion = df.Transversion.astype(float)    
-    df.Transition = df.Transition.astype(float)    
-    df.Indel = df.Indel.astype(float)    
-    df.Consensus = df.Consensus.astype(float)  
+    df.Transversion = df.Transversion.astype(int)    
+    df.Transition = df.Transition.astype(int)    
+    df.Indel = df.Indel.astype(int)    
+    df.Consensus = df.Consensus.astype(int)  
     
     df_mod =df[['start', 'Consensus','Indel','Transversion', 'Transition']]
     grouped = df_mod.groupby(['start'])
