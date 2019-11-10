@@ -1,8 +1,9 @@
 
-# AliVa; Simple nucleaotide variation counter
+# AliVa; Simple nucleotide variation counter
 ====
 
-AliVa is a simple counter and visualizar of aligned nucleotide sequence variation. AliVa counts the  indel/transition/transversion numbers from an multiple aligned nulceotide sequence file, and visularize the distribution of the variation with multiple plots. Our main purpose is the understanding of variation-enriched region on the aligned sequences. We split the alignemt with given window size (dafault = 50 bp), and caluclate the number of variation in each window. The variations will be counted via round robin among all aligned sequences and raw data will output to "result_rawdata.txt" file, and the mean values will described on "average.txt" file. The main output plot is "line_all.pdf" which visualize the distribution of the variations. 
+AliVa is a simple counter and visualizer of aligned nucleotide sequence variation. AliVa counts the indel/transition/transversion numbers from a multiple alignment file, and visualize the distribution of the variation with multiple plots. Our main purpose is the understanding of variation-enriched region on the aligned sequences. AliVa splits the alignment with given window size (default = 50 bp), and calculate the number of variation in each window. The variations will be counted among all pairs of aligned sequences. The raw counts will be described on the "result_rawdata.txt" file and the mean values will be shown on "average.txt" file. The main output plot is "line_all.pdf" which visualize the distribution of the variations.
+
 
 ## Output example
 
